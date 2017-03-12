@@ -9,6 +9,7 @@ import codecs
 import csv
 import json
 import logging
+from map_utils import getDistance
 
 app = Flask(__name__)
 api = Api(app)
@@ -16,6 +17,103 @@ api = Api(app)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+class NearWastePlace(Resource):
+    def post(self):
+        try:
+            parser = reqparse.RequestParser()
+            parser.add_argument('class', type=str, help='Class of shared waste')
+            parser.add_argument('latitude', type=str, help='Class of shared waste')
+            parser.add_argument('longitude', type=str, help='Class of shared waste')
+            args = parser.parse_args()
+            _class = args['class']
+            _latitude = args['latitude']
+            _longitude = args['longitude']
+
+            print(_latitude)
+            print(_longitude)
+
+            with codecs.open("place-waste.csv", encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                i = 0
+                db_place = []
+                for row in reader:
+                    if i > 0:
+                        db_id = i
+                        db_country = 'Россия'
+                        db_city = row[0]
+                        db_metro = row[1]
+                        db_region_city = row[1]
+                        db_latitude = row[2][:row[2].index(',')]
+                        db_longitude = row[2][row[2].index(',') + 1:]
+                        db_address = row[3]
+                        db_schedule = row[4]
+                        db_comment = 'Комментарий'
+                        db_social = row [5]
+                        db_place.append({
+                            'id': db_id,
+                            'country' : db_country,
+                            'city' : db_city,
+                            'metro' : db_metro,
+                            'region_city' : db_region_city,
+                            'latitude' : db_latitude,
+                            'longitude': db_longitude ,
+                            'address' : db_address,
+                            'schedule' : db_schedule,
+                            'comment' : db_comment,
+                            'social'  : db_social
+                        })
+                    i += 1
+                    pass
+
+            place_list = getDistance(origin=_latitude+","+_longitude,coordinate=None, csvf="place-waste.csv",sqlitef=None)
+            print(place_list)
+
+            near_place = []
+            other_place = []
+            id_list = []
+            for rec in place_list[1]:
+                id_list.append(rec[0])
+                pass
+
+            print (id_list)
+            print ("**1**")
+            for rec in db_place:
+                print (rec['id'])
+                if rec['id'] in id_list:
+                    print ("---1")
+                    for obj in place_list[1]:
+                        print (obj)
+                        if obj[0] == rec['id']:
+                            dist=obj[1]
+                    print (dist)
+                    #print (place_list[1] [x for i in id_list if x == rec['id']])
+                    print ("---1-")
+                    near_place.append({'place': rec, 'distance': dist})
+                else:
+                    print ("---2")
+                    other_place.append({'place':rec})
+            print ("4--")
+            """
+            placeitems: {
+            country:
+            city:
+            metro:
+            place:
+            latitude:
+            longitude:
+            address:
+            schedule:
+            comment:
+            social:
+            }
+            """
+            print ('result')
+            return {'StatusCode': '200', 'Message': 'Operation successful', 'NearPlace': near_place, 'OtherPlace':other_place}
+            pass
+        except Exception as e:
+            return {'error': str(e)}
+            pass
 
 class CollectionsPoint(Resource):
     def post(self):
@@ -36,12 +134,38 @@ class CollectionsPoint(Resource):
             result = []
             with codecs.open("place-waste.csv", encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                i = 0
                 for row in reader:
-                    if row[0] != 'point':
-                        if _metro in row[0].split(',') or _district in row[0].split(','):
-                            result.append(row)
-                        pass
-            return {'StatusCode':'200','Message': 'Operation successful', 'Place':result}
+                    if i>0:
+                        if ((_metro in row[1].split(',') or _district in row[1].split(',')) or
+                            (_metro == "" and _district == "")):
+                                db_id = i
+                                db_country = 'Россия'
+                                db_city = row[0]
+                                db_metro = row[1]
+                                db_region_city = row[1]
+                                db_latitude = row[2][:row[2].index(',')]
+                                db_longitude = row[2][row[2].index(',') + 1:]
+                                db_address = row[3]
+                                db_schedule = row[4]
+                                db_comment = 'Комментарий'
+                                db_social = row[5]
+                                result.append({
+                                    'id': db_id,
+                                    'country': db_country,
+                                    'city': db_city,
+                                    'metro': db_metro,
+                                    'region_city': db_region_city,
+                                    'latitude': db_latitude,
+                                    'longitude': db_longitude,
+                                    'address': db_address,
+                                    'schedule': db_schedule,
+                                    'comment': db_comment,
+                                    'social': db_social
+                                })
+                    i += 1
+
+            return {'StatusCode':'200','Message': 'Operation successful', 'Places':result}
         except Exception as e:
             return {'error': str(e)}
 
@@ -126,6 +250,8 @@ api.add_resource(UploadFile4Recognition, '/api/UploadFile4Recognition')
 api.add_resource(UploadFile4Learn, '/api/UploadFile4Learning')
 api.add_resource(GetTaskResult, '/api/CallBack')
 api.add_resource(GetList, '/api/List')
+api.add_resource(NearWastePlace, '/api/NearWastePlace')
+
 
 @app.route("/")
 def hello():
