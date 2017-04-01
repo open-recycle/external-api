@@ -3,6 +3,6 @@
   
 **В данный момент проект не завершен, находится в стадии разработки.**  
   
-external-api - REST API для работы с приложением   
+classifier-api - REST API для работы с приложением   
 open-recycle-android - Android клиент  
 wastedataminer - Telegram бот  
