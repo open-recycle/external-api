@@ -12,7 +12,7 @@ wastedataminer - Telegram бот
 1. Мы используем python3.4. Проект должен заработать с любым python3.
 2. Установите Tensorflow 1.0.0+: https://www.tensorflow.org/install/install_linux#installing_with_virtualenv, https://www.tensorflow.org/versions/r0.10/get_started/os_setup#virtualenv_installation
 3. Остальные зависимости: pip install -r requirements.txt
-4. Скачайте датасет или запустите свой: TODO
+4. Скачайте датасет (https://mega.nz/#!1V5WxQLa!sUPWYKgWRrMsFpWTHHJCpCmYY3elFTEx1itaEykrrF8) или создайте свой.
 5. Обучите нейросеть: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/image_retraining/retrain.py, retrain.py --image_dir $DATASET_DIR
 6. Проверить работу: python classify.py $SOME_IMAGE_FILE. Пример вывода:
 ```
