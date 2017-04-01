@@ -10,6 +10,10 @@ import csv
 import json
 import logging
 from map_utils import getDistance
+#try:
+from classify import run_inference_on_image
+#except:
+#    pass
 
 app = Flask(__name__)
 api = Api(app)
@@ -174,27 +178,72 @@ class UploadFile4Recognition(Resource):
         try:
             # Parse the arguments
             parser = reqparse.RequestParser()
-            parser.add_argument('user_id',required=True, type=str, help='user_id')
-            parser.add_argument('filename',required=True, type=str, help='Class of shared waste')
-            parser.add_argument('file', required=True, type=werkzeug.datastructures.FileStorage, location='files', help='Class of shared waste')
+            parser.add_argument('user_id', type=str, help='user_id')
+            parser.add_argument('filename',type=str, help='Class of shared waste')
+            parser.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files', help='Class of shared waste')
             args = parser.parse_args()
+            print(args)
             _userid = args['user_id']
             _filename = args['filename']
             _file = args['file'].stream
 
             request_id = uuid.uuid1().__str__()
-
-            with open("files4recognition/[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),_filename),'wb') as fout:
+            fn = "[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),_filename)
+            full_fn = "files4recognition/"+fn
+            with open(full_fn,'wb') as fout:
                 fout.write(_file.getvalue())
-            fout.close()
+            resultFlag = True
+            #
+            #
+            #resp = "сеть скорей всего не работает. печаль!!!"
+            print (full_fn)
+            try:
+                resp = run_inference_on_image(full_fn)
+                print (resp)
+            except Exception as e:
+                resultFlag = False
+                print (e)
+            #
+            #
+            #
+            result = ''
+            try:
+                with codecs.open("recycle_db.csv", encoding='utf-8') as csvfile:
+                    reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                    for rec in reader:
+                        if rec[2] in resp or resp in rec[2]:
+                            result = rec[1]
+                if result == '':
+                    result = "не удалось определить класс отходов"
+                pass
+            except Exception as e:
+                print (e)
+                if 'disposable paper cups resize' in resp:
+                    result = "бумажный стакан"
+                if 'lame foil' in resp:
+                    result = "фольга"
+                if 'glass bottle' in resp:
+                    result = "стеклянная бутылка"
+                if 'plastic bottle' in resp:
+                    result = "пластиковая бутылка"
+                if 'stupid' in resp:
+                    result = "неудалось определить класс отходов"
+                if 'receipt' in resp:
+                    result = "чек"
+                pass
 
-            return {'StatusCode': '2001', 'Message': 'File unsaved', 'callback_id' : request_id}
+            return {'StatusCode': '200', 'Message': result, 'callback_id' : request_id}
         except Exception as e:
             return {'error': str(e)}
 
 class GetList(Resource):
     def get(self):
-        return {'StatusCode':'200'}
+        db_list=[]
+        with codecs.open("recycle_db.csv", encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for rec in reader:
+                db_list.append({'id':rec[0],'name_rus':rec[1],'name_eng':rec[2]})
+        return {'StatusCode':'200', 'Message':db_list}
 
 class GetTaskResult(Resource):
     def get(self):
@@ -215,18 +264,17 @@ class UploadFile4Learn(Resource):
             print ("1")
             parser = reqparse.RequestParser()
             print ("2")
-            print (parser)
-            parser.add_argument('user_id',required=True, type=str, help='user_id')
-            parser.add_argument('source', required=True, type=str, help='user_id')
-            parser.add_argument('filename',required=True, type=str, help='filename')
-            parser.add_argument('descr', required=True, type=str, help='descr')
-            #parser.add_argument('file', required=True, type=werkzeug.datastructures.FileStorage, location='files', help='Class of shared waste')
+            parser.add_argument('user_id', type=str, help='user_id')
+            parser.add_argument('source',  type=str, help='user_id')
+            parser.add_argument('filename', type=str, help='filename')
+            parser.add_argument('descr', type=str, help='descr')
+            parser.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files', help='Class of shared waste')
             args = parser.parse_args()
+            print(args)
             _userid = args['user_id']
             _source = args['source']
             _descr = args['descr']
             _filename = args['filename']
-            """
             _file = args['file'].stream
 
             print(args)
@@ -238,7 +286,6 @@ class UploadFile4Learn(Resource):
             with open(filename,'wb') as fout:
                 fout.write(_file.getvalue())
             fout.close()
-            """
             return {'StatusCode':'200','Message': 'File saved'}
 
         except Exception as e:
@@ -262,4 +309,4 @@ app.config['PROFILE'] = True
 app.config['TRAP_HTTP_EXCEPTIONS'] = True
 
 if __name__ == '__main__':
-    app.run(debug=True,host="0.0.0.0", port=5000)
+    app.run(debug=True,host="0.0.0.0", port=5001)
