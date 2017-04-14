@@ -22,6 +22,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+_FOLDER_4_LEARN_ = "files4learning"
+_FOLDER_4_RCGN_ = "files4recognition"
+
 class NearWastePlace(Resource):
     def post(self):
         try:
@@ -187,9 +190,12 @@ class UploadFile4Recognition(Resource):
             _filename = args['filename']
             _file = args['file'].stream
 
+            if not os.path.exists(_FOLDER_4_RCGN_):
+                os.makedirs(_FOLDER_4_RCGN_)
+
             request_id = uuid.uuid1().__str__()
             fn = "[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),_filename)
-            full_fn = "files4recognition/"+fn
+            full_fn = _FOLDER_4_RCGN_+"/"+fn
             with open(full_fn,'wb') as fout:
                 fout.write(_file.getvalue())
             resultFlag = True
@@ -268,7 +274,7 @@ class UploadFile4Learn(Resource):
             parser.add_argument('source',  type=str, help='user_id')
             parser.add_argument('filename', type=str, help='filename')
             parser.add_argument('descr', type=str, help='descr')
-            parser.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files', help='Class of shared waste')
+            parser.add_argument('file', type=werkzeug.FileStorage, location='files', help='Class of shared waste')
             args = parser.parse_args()
             print(args)
             _userid = args['user_id']
@@ -279,10 +285,15 @@ class UploadFile4Learn(Resource):
 
             print(args)
 
+            # check exists folder for storage file
+
+            if not os.path.exists(_FOLDER_4_LEARN_):
+                os.makedirs(_FOLDER_4_LEARN_)
+
             if _source == 'bot':
-                filename = "files4learning/"+_filename
+                filename = _FOLDER_4_LEARN_+"/"+_filename
             else:
-                filename = "files4learning/{}-{}-{}-{}".format(_descr, _userid, time.time(), _filename)
+                filename = _FOLDER_4_LEARN_+"/"+"{}-{}-{}-{}".format(_descr, _userid, time.time(), _filename)
             with open(filename,'wb') as fout:
                 fout.write(_file.getvalue())
             fout.close()
