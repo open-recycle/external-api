@@ -4,16 +4,19 @@ from flask_restful import reqparse
 import werkzeug
 from io import StringIO
 import time
+import os
 import uuid
 import codecs
 import csv
 import json
 import logging
 from map_utils import getDistance
-#try:
-from classify import run_inference_on_image
-#except:
-#    pass
+from transliterate import translit
+
+try:
+    from classify import run_inference_on_image
+except:
+    pass
 
 app = Flask(__name__)
 api = Api(app)
@@ -194,7 +197,7 @@ class UploadFile4Recognition(Resource):
                 os.makedirs(_FOLDER_4_RCGN_)
 
             request_id = uuid.uuid1().__str__()
-            fn = "[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),_filename)
+            fn = "[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),translit(_filename, reversed=True))
             full_fn = _FOLDER_4_RCGN_+"/"+fn
             with open(full_fn,'wb') as fout:
                 fout.write(_file.getvalue())
@@ -293,7 +296,7 @@ class UploadFile4Learn(Resource):
             if _source == 'bot':
                 filename = _FOLDER_4_LEARN_+"/"+_filename
             else:
-                filename = _FOLDER_4_LEARN_+"/"+"{}-{}-{}-{}".format(_descr, _userid, time.time(), _filename)
+                filename = _FOLDER_4_LEARN_+"/"+"{}-{}-{}-{}".format(_descr, _userid, time.time(), translit(_filename, reversed=True))
             with open(filename,'wb') as fout:
                 fout.write(_file.getvalue())
             fout.close()
