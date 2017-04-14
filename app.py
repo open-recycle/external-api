@@ -183,7 +183,7 @@ class UploadFile4Recognition(Resource):
             parser = reqparse.RequestParser()
             parser.add_argument('user_id', type=str, help='user_id')
             parser.add_argument('filename',type=str, help='Class of shared waste')
-            parser.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files', help='Class of shared waste')
+            parser.add_argument('file', type=werkzeug.FileStorage, location='files', help='Class of shared waste')
             args = parser.parse_args()
             print(args)
             _userid = args['user_id']
