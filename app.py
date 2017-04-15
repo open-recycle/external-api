@@ -1,3 +1,5 @@
+
+# coding: utf8
 from flask import Flask
 from flask_restful import Resource, Api
 from flask_restful import reqparse
@@ -12,6 +14,7 @@ import logging
 from map_utils import getDistance
 #try:
 from classify import run_inference_on_image
+import os
 #except:
 #    pass
 
@@ -188,18 +191,19 @@ class UploadFile4Recognition(Resource):
             _file = args['file'].stream
 
             request_id = uuid.uuid1().__str__()
-            fn = "[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),_filename)
-            full_fn = "files4recognition/"+fn
+            fn = "[{}]-[{}]-[{}]-{}".format(request_id,_userid,time.time(),_filename)+".jpg"
+            full_fn = "files4recognition"+os.sep+fn
             with open(full_fn,'wb') as fout:
                 fout.write(_file.getvalue())
+            fout.close()
             resultFlag = True
             #
             #
-            #resp = "сеть скорей всего не работает. печаль!!!"
+            resp = "сеть скорей всего не работает. печаль!!!"
             print (full_fn)
             try:
                 resp = run_inference_on_image(full_fn)
-                print (resp)
+                print ("--->",resp)
             except Exception as e:
                 resultFlag = False
                 print (e)
@@ -214,7 +218,7 @@ class UploadFile4Recognition(Resource):
                         if rec[2] in resp or resp in rec[2]:
                             result = rec[1]
                 if result == '':
-                    result = "не удалось определить класс отходов"
+                    result = "unknown type of waste"
                 pass
             except Exception as e:
                 print (e)
@@ -230,6 +234,10 @@ class UploadFile4Recognition(Resource):
                     result = "неудалось определить класс отходов"
                 if 'receipt' in resp:
                     result = "чек"
+                if 'aluminium cup' in resp:
+                    result = "aluminium cup"
+                #result = result.encode('utf-8')
+                print("++++",result)
                 pass
 
             return {'StatusCode': '200', 'Message': result, 'callback_id' : request_id}
@@ -280,9 +288,9 @@ class UploadFile4Learn(Resource):
             print(args)
 
             if _source == 'bot':
-                filename = "files4learning/"+_filename
+                filename = "files4learning"+os.sep+_filename
             else:
-                filename = "files4learning/{}-{}-{}-{}".format(_descr, _userid, time.time(), _filename)
+                filename = "files4learning"+os.sep+"{}-{}-{}-{}".format(_descr, _userid, time.time(), _filename)
             with open(filename,'wb') as fout:
                 fout.write(_file.getvalue())
             fout.close()
@@ -309,4 +317,4 @@ app.config['PROFILE'] = True
 app.config['TRAP_HTTP_EXCEPTIONS'] = True
 
 if __name__ == '__main__':
-    app.run(debug=True,host="0.0.0.0", port=5001)
+    app.run(debug=True,host="0.0.0.0", port=48777)
