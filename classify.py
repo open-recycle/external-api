@@ -1,3 +1,4 @@
+# coding: utf8
 """
 Preparing model:
  - Install bazel ( check tensorflow's github for more info )
@@ -36,10 +37,10 @@ For testing through python, change and run this code.
 import numpy as np
 import tensorflow as tf
 
-imagePath = '/tmp/imagenet/flower.jpg'
-modelFullPath = '/tmp/output_graph.pb'
-#modelFullPath = '/tmp/classify_image_graph_dev.pb'
-labelsFullPath = '/tmp/output_labels.txt'
+imagePath = '/home/starforge/DS/CNN/imagenet/flower.jpg'
+modelFullPath = '/home/starforge/DS/CNN/output_graph.pb'
+#modelFullPath = '/home/starforge/DS/CNN/classify_image_graph_dev.pb'
+labelsFullPath = '/home/starforge/DS/CNN/output_labels.txt'
 
 
 def create_graph():
